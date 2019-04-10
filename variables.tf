@@ -1,7 +1,4 @@
 ## VARIABLES.TF
-------------------
-
-# Two-Tier example from https://github.com/terraform-providers/terraform-provider-aws
 
 variable "private_key_path" {
   description = <<DESCRIPTION
