@@ -32,3 +32,8 @@ variable "aws_amis" {
   default = "ami-0a313d6098716f372"
 }
 
+variable "tags" {
+  description 	=	 	"A map of tags to add to all resources"  
+  default     	=	 	"Infra-Testing"
+}
+
