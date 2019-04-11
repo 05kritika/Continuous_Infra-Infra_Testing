@@ -34,6 +34,6 @@ variable "aws_amis" {
 
 variable "tags" {
   description 	=	 	"A map of tags to add to all resources"  
-  "Name"    	=	 	"Infra-Testing"
+  default    	=	 	"Infra-Testing"
 }
 
