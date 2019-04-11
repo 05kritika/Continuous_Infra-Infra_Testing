@@ -21,48 +21,48 @@ resource "aws_vpc" "Infra-Test" {
 }
 
 resource "aws_vpc_dhcp_options_association" "dns_resolver" {
-  vpc_id = "${aws_vpc.default.id}"
+  vpc_id = "${aws_vpc.Infra-Test.id}"
   dhcp_options_id = "${aws_vpc_dhcp_options.DHCP.id}"
 }
 
 # Create an internet gateway to give our subnet access to the outside world
-resource "aws_internet_gateway" "default" {
-  vpc_id = "${aws_vpc.default.id}"
+resource "aws_internet_gateway" "Infra-Test" {
+  vpc_id = "${aws_vpc.Infra-Test.id}"
   tags 						=	"${var.tags}"
 }
 
 # Create a subnet to launch our instances into
-resource "aws_subnet" "default" {
-  vpc_id                  = "${aws_vpc.default.id}"
+resource "aws_subnet" "Infra-Test" {
+  vpc_id                  = "${aws_vpc.Infra-Test.id}"
   cidr_block              = "10.0.1.0/24"
   map_public_ip_on_launch = true
   tags 						=	"${var.tags}"
 }
 
-resource "aws_route_table" "default" {
-  vpc_id = "${aws_vpc.default.id}"
+resource "aws_route_table" "Infra-Test" {
+  vpc_id = "${aws_vpc.Infra-Test.id}"
   tags 						=	"${var.tags}"
 }
 
 resource "aws_route_table_association" "default_association" {
-  subnet_id = "${aws_subnet.default.id}"
-  route_table_id = "${aws_route_table.default.id}"
-#  vpc_id = "${aws_vpc.default.id}"
+  subnet_id = "${aws_subnet.Infra-Test.id}"
+  route_table_id = "${aws_route_table.Infra-Test.id}"
+#  vpc_id = "${aws_vpc.Infra-Test.id}"
 }
 
 # Grant the VPC internet access on its main route table
 resource "aws_route" "internet_access" {
-  route_table_id         = "${aws_route_table.default.id}"
+  route_table_id         = "${aws_route_table.Infra-Test.id}"
   destination_cidr_block = "0.0.0.0/0"
-  gateway_id             = "${aws_internet_gateway.default.id}"
+  gateway_id             = "${aws_internet_gateway.Infra-Test.id}"
 }
 
 
 # A security group for the ELB so it is accessible via the web
-resource "aws_security_group" "elb" {
+resource "aws_security_group" "Infra-Test-elb" {
   name        = "terraform_example_elb"
   description = "Used in the terraform"
-  vpc_id      = "${aws_vpc.default.id}"
+  vpc_id      = "${aws_vpc.Infra-Test.id}"
 
   # HTTP access from anywhere
   ingress {
@@ -85,10 +85,10 @@ resource "aws_security_group" "elb" {
 
 # Our default security group to access
 # the instances over SSH and HTTP
-resource "aws_security_group" "default" {
+resource "aws_security_group" "Infra-Test-Ec2" {
   name        = "terraform_example"
   description = "Used in the terraform"
-  vpc_id      = "${aws_vpc.default.id}"
+  vpc_id      = "${aws_vpc.Infra-Test.id}"
 
   # SSH access from anywhere
   ingress {
@@ -117,12 +117,12 @@ resource "aws_security_group" "default" {
   tags 						=	"${var.tags}"
 }
 
-resource "aws_elb" "web" {
+resource "aws_elb" "Infra-Test" {
   name = "terraform-example-elb"
 
-  subnets         = ["${aws_subnet.default.id}"]
-  security_groups = ["${aws_security_group.elb.id}"]
-  instances       = ["${aws_instance.web.id}"]
+  subnets         = ["${aws_subnet.Infra-Test.id}"]
+  security_groups = ["${aws_security_group.Infra-Test-elb.id}"]
+  instances       = ["${aws_instance.Infra-Test.id}"]
 
   listener {
    instance_port     = 80
@@ -135,7 +135,7 @@ resource "aws_elb" "web" {
 }
 
 
-resource "aws_instance" "web" {
+resource "aws_instance" "Infra-Test" {
 
   
   tags 						=	"${var.tags}"
@@ -144,7 +144,7 @@ resource "aws_instance" "web" {
   connection {
   # The default username for our AMI
   # host = "${self.public_ip}"
-    host = "${aws_instance.web.public_dns}"
+    host = "${aws_instance.Infra-Test.public_dns}"
   # type = "ssh"
     user = "ubuntu"
     private_key = "${file(var.private_key_path)}"
@@ -161,10 +161,10 @@ resource "aws_instance" "web" {
   # key_name = "${aws_key_pair.auth.id}"
 
   # Our Security group to allow HTTP and SSH access
-  vpc_security_group_ids = ["${aws_security_group.default.id}"]
+  vpc_security_group_ids = ["${aws_security_group.Infra-Test-Ec2.id}"]
 
   # We're going to launch into the same subnet as our ELB. In a production environment its more common to have a separate private subnet for backend instances.
-  subnet_id = "${aws_subnet.default.id}"
+  subnet_id = "${aws_subnet.Infra-Test.id}"
 
   # We run a remote provisioner on the instance after creating it. In this case, we just install nginx and start it. By default, this should be on port 80
 #  provisioner "remote-exec" {
