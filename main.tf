@@ -155,7 +155,7 @@ resource "aws_instance" "Infra-Test" {
 
   
   tags = {
-    Name = "Infra-Testing-Example"
+    Name = "Infra-Testing-Demo"
   }
   key_name = "${var.key_name}"
   # The connection block tells our provisioner how to communicate with the resource (instance)
