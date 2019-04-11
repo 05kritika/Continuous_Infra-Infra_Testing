@@ -9,7 +9,9 @@ provider "aws" {
 
 resource "aws_vpc_dhcp_options" "DHCP" {
   domain_name_servers = ["AmazonProvidedDNS"]
-  tags 						=	"Infra-Testing"
+  tags = {
+    Name = "Infra-Testing"
+  }
 }
 
 # Create a VPC to launch our instances into
@@ -17,7 +19,9 @@ resource "aws_vpc" "Infra-Test" {
   cidr_block = "10.0.0.0/16"
   instance_tenancy = "default"
   enable_dns_hostnames = "true"
-  tags 						=	"Infra-Testing"
+  tags = {
+    Name = "Infra-Testing"
+  }
 }
 
 resource "aws_vpc_dhcp_options_association" "dns_resolver" {
@@ -28,7 +32,9 @@ resource "aws_vpc_dhcp_options_association" "dns_resolver" {
 # Create an internet gateway to give our subnet access to the outside world
 resource "aws_internet_gateway" "Infra-Test" {
   vpc_id = "${aws_vpc.Infra-Test.id}"
-  tags 						=	"Infra-Testing"
+  tags = {
+    Name = "Infra-Testing"
+  }
 }
 
 # Create a subnet to launch our instances into
@@ -36,12 +42,16 @@ resource "aws_subnet" "Infra-Test" {
   vpc_id                  = "${aws_vpc.Infra-Test.id}"
   cidr_block              = "10.0.1.0/24"
   map_public_ip_on_launch = true
-  tags 						=	"Infra-Testing"
+  tags = {
+    Name = "Infra-Testing"
+  }
 }
 
 resource "aws_route_table" "Infra-Test" {
   vpc_id = "${aws_vpc.Infra-Test.id}"
-  tags 						=	"Infra-Testing"
+ tags = {
+    Name = "Infra-testing"
+  }
 }
 
 resource "aws_route_table_association" "default_association" {
@@ -80,7 +90,9 @@ resource "aws_security_group" "Infra-Test-elb" {
     cidr_blocks = ["0.0.0.0/0"]
   }
   
-  tags 						=	"Infra-Testing"
+  tags = {
+    Name = "Infra-Testing"
+  }
 }
 
 # Our default security group to access
@@ -114,7 +126,9 @@ resource "aws_security_group" "Infra-Test-Ec2" {
     cidr_blocks = ["0.0.0.0/0"]
   }
   
-  tags 						=	"Infra-Testing"
+  tags = {
+    Name = "Infra-Testing"
+  }
 }
 
 resource "aws_elb" "Infra-Test" {
@@ -131,14 +145,18 @@ resource "aws_elb" "Infra-Test" {
     lb_protocol       = "http"
   }
   
-  tags 						=	"Infra-Testing"
+  tags = {
+    Name = "Infra-Testing"
+  }
 }
 
 
 resource "aws_instance" "Infra-Test" {
 
   
-  tags 						=	"Infra-Testing"
+  tags = {
+    Name = "Infra-Testing"
+  }
   key_name = "${var.key_name}"
   # The connection block tells our provisioner how to communicate with the resource (instance)
   connection {
