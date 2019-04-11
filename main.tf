@@ -9,13 +9,15 @@ provider "aws" {
 
 resource "aws_vpc_dhcp_options" "DHCP" {
   domain_name_servers = ["AmazonProvidedDNS"]
+  tags 						=	"${var.tags}"
 }
 
 # Create a VPC to launch our instances into
-resource "aws_vpc" "default" {
+resource "aws_vpc" "Infra-Test" {
   cidr_block = "10.0.0.0/16"
   instance_tenancy = "default"
   enable_dns_hostnames = "true"
+  tags 						=	"${var.tags}"
 }
 
 resource "aws_vpc_dhcp_options_association" "dns_resolver" {
@@ -26,6 +28,7 @@ resource "aws_vpc_dhcp_options_association" "dns_resolver" {
 # Create an internet gateway to give our subnet access to the outside world
 resource "aws_internet_gateway" "default" {
   vpc_id = "${aws_vpc.default.id}"
+  tags 						=	"${var.tags}"
 }
 
 # Create a subnet to launch our instances into
@@ -33,10 +36,12 @@ resource "aws_subnet" "default" {
   vpc_id                  = "${aws_vpc.default.id}"
   cidr_block              = "10.0.1.0/24"
   map_public_ip_on_launch = true
+  tags 						=	"${var.tags}"
 }
 
 resource "aws_route_table" "default" {
   vpc_id = "${aws_vpc.default.id}"
+  tags 						=	"${var.tags}"
 }
 
 resource "aws_route_table_association" "default_association" {
@@ -74,6 +79,8 @@ resource "aws_security_group" "elb" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
+  
+  tags 						=	"${var.tags}"
 }
 
 # Our default security group to access
@@ -106,6 +113,8 @@ resource "aws_security_group" "default" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
+  
+  tags 						=	"${var.tags}"
 }
 
 resource "aws_elb" "web" {
@@ -121,11 +130,15 @@ resource "aws_elb" "web" {
     lb_port           = 80
     lb_protocol       = "http"
   }
+  
+  tags 						=	"${var.tags}"
 }
 
 
 resource "aws_instance" "web" {
 
+  
+  tags 						=	"${var.tags}"
   key_name = "${var.key_name}"
   # The connection block tells our provisioner how to communicate with the resource (instance)
   connection {
