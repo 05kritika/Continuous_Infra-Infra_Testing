@@ -66,7 +66,7 @@ output "ec2_security_group" {
 }
 
 output "elb_security_group_id" {
-  value = "${aws_security_group.elb.id}"
+  value = "${aws_security_group.Infra-Test-elb.id}"
 
 }
 
