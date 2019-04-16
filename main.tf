@@ -1,106 +1,21 @@
-# DATA
-#data "aws_region" "current" {}
-data "aws_availability_zones" "available" {}
+# DEMO.TF
+----------
 
-# Specify the provider and access details
+
+## PROVIDERS ##
+
 provider "aws" {
-  region = "${var.aws_region}"
-}
-
-resource "aws_vpc_dhcp_options" "DHCP" {
-  domain_name_servers = ["AmazonProvidedDNS"]
-  tags = {
-    Name = "Infra-Testing"
-  }
-}
-
-# Create a VPC to launch our instances into
-resource "aws_vpc" "Infra-Test" {
-  cidr_block = "10.0.0.0/16"
-  instance_tenancy = "default"
-  enable_dns_hostnames = "true"
-  tags = {
-    Name = "Infra-Testing"
-  }
-}
-
-resource "aws_vpc_dhcp_options_association" "dns_resolver" {
-  vpc_id = "${aws_vpc.Infra-Test.id}"
-  dhcp_options_id = "${aws_vpc_dhcp_options.DHCP.id}"
-}
-
-# Create an internet gateway to give our subnet access to the outside world
-resource "aws_internet_gateway" "Infra-Test" {
-  vpc_id = "${aws_vpc.Infra-Test.id}"
-  tags = {
-    Name = "Infra-Testing"
-  }
-}
-
-# Create a subnet to launch our instances into
-resource "aws_subnet" "Infra-Test" {
-  vpc_id                  = "${aws_vpc.Infra-Test.id}"
-  cidr_block              = "10.0.1.0/24"
-  map_public_ip_on_launch = true
-  tags = {
-    Name = "Infra-Testing"
-  }
-}
-
-resource "aws_route_table" "Infra-Test" {
-  vpc_id = "${aws_vpc.Infra-Test.id}"
- tags = {
-    Name = "Infra-testing"
-  }
-}
-
-resource "aws_route_table_association" "default_association" {
-  subnet_id = "${aws_subnet.Infra-Test.id}"
-  route_table_id = "${aws_route_table.Infra-Test.id}"
-#  vpc_id = "${aws_vpc.Infra-Test.id}"
-}
-
-# Grant the VPC internet access on its main route table
-resource "aws_route" "internet_access" {
-  route_table_id         = "${aws_route_table.Infra-Test.id}"
-  destination_cidr_block = "0.0.0.0/0"
-  gateway_id             = "${aws_internet_gateway.Infra-Test.id}"
-}
-
-
-# A security group for the ELB so it is accessible via the web
-resource "aws_security_group" "Infra-Test-elb" {
-  name        = "terraform_example_elb"
-  description = "Used in the terraform"
-  vpc_id      = "${aws_vpc.Infra-Test.id}"
-
-  # HTTP access from anywhere
-  ingress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
- }
-
-  # outbound internet access
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
   
-  tags = {
-    Name = "Infra-Testing"
-  }
+  region     = "us-east-1"
 }
 
-# Our default security group to access
-# the instances over SSH and HTTP
-resource "aws_security_group" "Infra-Test-Ec2" {
-  name        = "terraform_example"
-  description = "Used in the terraform"
-  vpc_id      = "${aws_vpc.Infra-Test.id}"
+
+## RESOURCES ##
+
+# Nginx security group 
+resource "aws_security_group" "nginx-sg" {
+  name        = "nginx_sg"
+  vpc_id      = "${aws_vpc.vpc.id}"
 
   # SSH access from anywhere
   ingress {
@@ -125,72 +40,45 @@ resource "aws_security_group" "Infra-Test-Ec2" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
-  
-  tags = {
-    Name = "Infra-Testing"
-  }
-}
 
-resource "aws_elb" "Infra-Test" {
-  name = "terraform-example-elb"
-
-  subnets         = ["${aws_subnet.Infra-Test.id}"]
-  security_groups = ["${aws_security_group.Infra-Test-elb.id}"]
-  instances       = ["${aws_instance.Infra-Test.id}"]
-
-  listener {
-   instance_port     = 80
-    instance_protocol = "http"
-    lb_port           = 80
-    lb_protocol       = "http"
+  tags {
+    Name = "nginx-security-group"
   }
-  
-  tags = {
-    Name = "Infra-Testing"
-  }
+
 }
 
 
-resource "aws_instance" "Infra-Test" {
+resource "aws_instance" "nginx" {
+  ami           = "ami-0ac019f4fcb7cb7e6"
+  instance_type = "t2.micro"
+  key_name      = "${var.key_name}"
 
-  
-  tags = {
-    Name = "Infra-Testing-Demo"
-  }
-  key_name = "${var.key_name}"
-  # The connection block tells our provisioner how to communicate with the resource (instance)
   connection {
-  # The default username for our AMI
-  # host = "${self.public_ip}"
-    host = "${aws_instance.Infra-Test.public_dns}"
-  # type = "ssh"
-    user = "ubuntu"
+    user        = "ubuntu"
     private_key = "${file(var.private_key_path)}"
-
-    # The connection will use the local SSH agent for authentication.
   }
 
-  instance_type = "${var.instance_type}"
+   tags {
+    Name = "nginx"
+  }
 
-  # Lookup the correct AMI based on the region we specified
-  ami = "${var.aws_amis}"
+   provisioner "local-exec" {
+    command = "echo ${aws_instance.nginx.public_ip} > ip_address.txt"
+  }
 
-  # The name of our SSH keypair we created above.
-  # key_name = "${aws_key_pair.auth.id}"
+  #provisioner "remote-exec" {
+  #  inline = [
+  #     "sudo apt-get install nginx -y",
+  #     "sudo systemctl start nginx"
+  #   ]
+  #}
+#}
 
-  # Our Security group to allow HTTP and SSH access
-  vpc_security_group_ids = ["${aws_security_group.Infra-Test-Ec2.id}"]
 
-  # We're going to launch into the same subnet as our ELB. In a production environment its more common to have a separate private subnet for backend instances.
-  subnet_id = "${aws_subnet.Infra-Test.id}"
-
-  # We run a remote provisioner on the instance after creating it. In this case, we just install nginx and start it. By default, this should be on port 80
-#  provisioner "remote-exec" {
-#    inline = [
-#      "sleep 20",
-#      "sudo apt-get -y update",
-#      "sudo apt-get -y install nginx",
-#      "sudo systemctl start nginx"
-#    ]
-#  }
+resource "aws_vpc" "testing" {
+  cidr_block = "10.0.0.0/16"
+  instance_tenancy = "default"
+  enable_dns_hostnames = "true"
 }
+
+
