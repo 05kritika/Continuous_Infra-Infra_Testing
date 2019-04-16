@@ -15,7 +15,7 @@ provider "aws" {
 # Nginx security group 
 resource "aws_security_group" "nginx-sg" {
   name        = "nginx_sg"
-  vpc_id      = "${aws_vpc.vpc.id}"
+ 
 
   # SSH access from anywhere
   ingress {
