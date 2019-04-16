@@ -72,7 +72,7 @@ resource "aws_instance" "nginx" {
   #     "sudo systemctl start nginx"
   #   ]
   #}
-#}
+}
 
 
 resource "aws_vpc" "testing" {
