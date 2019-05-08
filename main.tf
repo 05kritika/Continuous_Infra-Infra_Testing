@@ -159,17 +159,7 @@ resource "aws_instance" "Infra-Test" {
   }
   key_name = "${var.key_name}"
   # The connection block tells our provisioner how to communicate with the resource (instance)
-  connection {
-  # The default username for our AMI
-  # host = "${self.public_ip}"
-    host = "${aws_instance.Infra-Test.public_dns}"
-  # type = "ssh"
-    user = "ubuntu"
-    private_key = "${file(var.private_key_path)}"
-
-    # The connection will use the local SSH agent for authentication.
-  }
-
+  
   instance_type = "${var.instance_type}"
 
   # Lookup the correct AMI based on the region we specified
@@ -183,14 +173,24 @@ resource "aws_instance" "Infra-Test" {
 
   # We're going to launch into the same subnet as our ELB. In a production environment its more common to have a separate private subnet for backend instances.
   subnet_id = "${aws_subnet.Infra-Test.id}"
+connection {
+  # The default username for our AMI
+  # host = "${self.public_ip}"
+    host = "${aws_instance.Infra-Test.public_dns}"
+  # type = "ssh"
+    user = "ubuntu"
+    private_key = "${file(var.private_key_path)}"
+
+    # The connection will use the local SSH agent for authentication.
+  }
 
   # We run a remote provisioner on the instance after creating it. In this case, we just install nginx and start it. By default, this should be on port 80
-#  provisioner "remote-exec" {
-#    inline = [
-#      "sleep 20",
-#      "sudo apt-get -y update",
-#      "sudo apt-get -y install nginx",
-#      "sudo systemctl start nginx"
-#    ]
-#  }
+ provisioner "remote-exec" {
+    inline = [
+      "sleep 20",
+      "sudo apt-get -y update",
+      "sudo apt-get -y install nginx",
+      "sudo systemctl start nginx"
+    ]
+  }
 }
